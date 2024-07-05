@@ -75,6 +75,7 @@ type Result struct {
 var store *sessions.CookieStore
 var sessionShoppingCart = "shopping-cart-session"
 var sessionFlash = "flash-session"
+var sessionUser = "user-session"
 
 func SetSessionStore(sessionKey string) {
 	store = sessions.NewCookieStore([]byte(sessionKey))
@@ -279,7 +280,7 @@ func (s *Server) CalculateShippingFee(shippingParams models.ShippingFeeParams)([
     return shippingFeeOptions, nil
 }
 
-func setFlash(w http.ResponseWriter, r *http.Request,name string,value string){
+func SetFlash(w http.ResponseWriter, r *http.Request,name string,value string){
 	session,err := store.Get(r,sessionFlash)
 	if err!= nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -297,7 +298,7 @@ func GetFlash(w http.ResponseWriter, r *http.Request, name string) []string{
         return nil
     }
 	fm := session.Flashes(name)
-	if len(fm)<0 {
+	if len(fm)==0 {
 		return nil
 	}
 	session.Save(r,w)

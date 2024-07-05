@@ -16,6 +16,22 @@
                 </div>
             </div>
         </div>
+        {{ if .success }}
+        <div class="alert alert-success">
+            {{ range $msg := .success }}
+                {{ $msg }}<br/>
+            {{ end }}
+        </div>
+        {{ end }}
+        
+        {{ if .error }}
+            <div class="alert alert-danger">
+                {{ range $msg := .error }}
+                    {{ $msg }}<br/>
+                {{ end }}
+            </div>
+        {{ end }}
+
         <div class="table-responsive mt-5">
             <form method="POST" action="/carts/update">
                 <table class="table table-striped">
@@ -62,6 +78,7 @@
             <div class="col-6">
                 <h4>Cart Totals</h4>
                 <div class="table-responsive">
+                    <form method="POST" id="calculate-shipping" action="/orders/checkout">
                         <table class="table table-striped">
                             <tr>
                                 <th>Sub Total</th>
@@ -76,6 +93,7 @@
 
                             <th>Shipping</th>
                             <td>
+                                
                                 <div id="shipping-calculation-msg"></div>
                                     <div class="form-group">
                                         <select name="courier" class="form-control courier">
@@ -99,6 +117,7 @@
                                     <div class="form-group">
                                         <select name="shipping_fee" class="form-control shipping_fee_options"></select>
                                     </div>
+                                
                             </td>
                                 
                             </tr>
@@ -106,7 +125,11 @@
                                 <th>Total</th>
                                 <td><strong><span id="grand-total">{{ .cart.GrandTotal }}</span></strong></td>
                             </tr>
+                            <tr>
+                                <th>&nbsp;<td></th><button type="submit" class="btn btn-success pull-right">Go to Checkout</button></td>
+                            </tr>
                         </table>
+                    </form>
                 </div>
             </div>
         </div>

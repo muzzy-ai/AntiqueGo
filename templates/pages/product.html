@@ -51,6 +51,7 @@
                     </ol>
                 </div>
             </div>
+
             <div class="col-lg-6 col-md-6 col-12">
                 <div class="product-detail">
                     <h2 class="product-name">{{.product.Name}}</h2>
@@ -58,6 +59,21 @@
                         <span class="price">{{.product.Price}}</span>
                         <!-- <span class="price-muted">IDR 499.000</span> -->
                     </div>
+                    {{ if .success }}
+                    <div class="alert alert-success">
+                        {{ range $msg := .success }}
+                            {{ $msg }}<br/>
+                        {{ end }}
+                    </div>
+                    {{ end }}
+                    
+                    {{ if .error }}
+                        <div class="alert alert-danger">
+                            {{ range $msg := .error }}
+                                {{ $msg }}<br/>
+                            {{ end }}
+                        </div>
+                    {{ end }}
                     <div class="product-short-desc">
                         <p>
                            {{.product.ShortDescription}}
