@@ -13,8 +13,9 @@ func (s *Server) Home(w http.ResponseWriter, r *http.Request) {
 		Extensions: []string{".html", ".tmpl"},
 	})
 
+	user := s.CurrentUser(w,r)
+
 	_ = render.HTML(w,http.StatusOK, "home",map[string]interface{}{
-		"title": "Home Title",
-		"body": "Home Body",
+		"user": user,
 	})
 }

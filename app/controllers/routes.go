@@ -10,6 +10,11 @@ import (
 func (s *Server) InitializeRoutes() {
 	s.Router = mux.NewRouter()
 	s.Router.HandleFunc("/", s.Home).Methods("GET")
+
+	s.Router.HandleFunc("/login", s.Login).Methods("GET")
+	s.Router.HandleFunc("/login", s.DoLogin).Methods("POST")
+	s.Router.HandleFunc("/logout", s.Logout).Methods("POST")
+
 	s.Router.HandleFunc("/products", s.Products).Methods("GET")
 	s.Router.HandleFunc("/products/{slug}", s.GetProductBySlug).Methods("GET")
 
@@ -20,6 +25,8 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/carts/calculate-shipping",s.CalculateShipping).Methods("POST")
 	s.Router.HandleFunc("/carts/apply-shipping",s.ApplyShipping).Methods("POST")
 	s.Router.HandleFunc("/carts/remove/{id}",s.RemoveItemByID).Methods("GET")
+
+	s.Router.HandleFunc("/orders/checkout", s.Checkout).Methods("POST")
 
 
 	staticFileDirectory := http.Dir("./assets/")

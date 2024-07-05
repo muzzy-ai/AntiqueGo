@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/urfave/cli"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -308,4 +309,34 @@ func GetFlash(w http.ResponseWriter, r *http.Request, name string) []string{
     }
 	return flashes
 
+}
+
+func IsLoggedIn(r *http.Request)bool{
+	session,_:=store.Get(r,sessionUser)
+	if session.Values["id"]==nil {
+        return false
+    }
+	return true
+}
+
+func ComparePassword(password string, hashedPassword string)bool{
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))==nil
+}
+
+
+func (s *Server) CurrentUser(w http.ResponseWriter, r *http.Request) *models.User{
+	if !IsLoggedIn(r){
+		return nil
+	}
+
+	userModel := models.User{}
+
+	session,_:= store.Get(r,sessionUser)
+	user,err := userModel.FindByID(s.DB, session.Values["id"].(string))
+	if err != nil {
+		session.Values["id"] = nil
+		session.Save(r,w)
+		return nil
+	}
+	return user
 }
