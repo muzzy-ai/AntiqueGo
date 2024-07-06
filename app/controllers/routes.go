@@ -13,7 +13,9 @@ func (s *Server) InitializeRoutes() {
 
 	s.Router.HandleFunc("/login", s.Login).Methods("GET")
 	s.Router.HandleFunc("/login", s.DoLogin).Methods("POST")
-	s.Router.HandleFunc("/logout", s.Logout).Methods("POST")
+	s.Router.HandleFunc("/register", s.Register).Methods("GET")
+	s.Router.HandleFunc("/register", s.DoRegister).Methods("POST")
+	s.Router.HandleFunc("/logout", s.Logout).Methods("GET")
 
 	s.Router.HandleFunc("/products", s.Products).Methods("GET")
 	s.Router.HandleFunc("/products/{slug}", s.GetProductBySlug).Methods("GET")
