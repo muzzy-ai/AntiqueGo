@@ -6,7 +6,9 @@ import (
 	// "github.com/google/uuid"
 	// "gorm.io/gorm"
 
+	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
+	"gorm.io/gorm"
 )
 
 type OrderItem struct {
@@ -28,4 +30,12 @@ type OrderItem struct {
 	Weight          decimal.Decimal `gorm:"type:decimal(10,2)"`
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+}
+
+
+func (o *OrderItem) BeforeCreate (db *gorm.DB) error {
+	if o.ID == "" {
+        o.ID = uuid.New().String()
+    }
+	return nil
 }

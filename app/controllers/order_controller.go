@@ -3,8 +3,13 @@ package controllers
 import (
 	// "database/sql"
 	// "errors"
-	"fmt"
+	// "database/sql"
+	"errors"
+	// "fmt"
 	"net/http"
+	"os"
+	"time"
+
 	// "os"
 	// "time"
 
@@ -12,7 +17,9 @@ import (
 	// "github.com/gieart87/gotoko/app/core/session/flash"
 
 	// "github.com/gorilla/mux"
-	"github.com/unrolled/render"
+	// "github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	// "github.com/unrolled/render"
 
 	// "github.com/google/uuid"
 	// "github.com/midtrans/midtrans-go"
@@ -49,10 +56,10 @@ type ShippingAddress struct {
 }
 
 func (s *Server) Checkout(w http.ResponseWriter, r *http.Request) {
-	render := render.New(render.Options{
-		Layout:"layout",
-        Extensions: []string{".html", ".tmpl"},
-    })
+	// render := render.New(render.Options{
+	// 	Layout:"layout",
+    //     Extensions: []string{".html", ".tmpl"},
+    // })
 
 	if !IsLoggedIn(r){
 		SetFlash(w,r,"error","anda perlu login")
@@ -60,11 +67,54 @@ func (s *Server) Checkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := s.CurrentUser(w,r)
-	fmt.Println(user)
 
-	_ = render.HTML(w,http.StatusOK, "checkout",map[string]interface{}{
-		"user": user,
-	})
+	shippingCost,err := s.getSelectedShippingCost(w,r)
+	if err!= nil {
+        SetFlash(w,r,"error","gagal mendapatkan harga pengiriman")
+        http.Redirect(w, r, "/carts", http.StatusSeeOther)
+    }
+
+	cartID := GetShoppingCartID(w,r)
+	cart,_ := GetShoppingCart(s.DB, cartID)
+
+	checkoutRequest := &CheckoutRequest{
+		Cart:            cart,
+        ShippingFee:     &ShippingFee{
+			Courier:     r.FormValue("courier"),
+            PackageName: r.FormValue("shipping_fee"),
+            Fee:         shippingCost,
+		},
+        ShippingAddress: &ShippingAddress{
+			FirstName:  r.FormValue("first_name"),
+			LastName:   r.FormValue("last_name"),
+			CityID:     r.FormValue("city_id"),
+			ProvinceID: r.FormValue("province_id"),
+			Address1:   r.FormValue("address1"),
+			Address2:   r.FormValue("address2"),
+			Phone:      r.FormValue("phone"),
+			Email:      r.FormValue("email"),
+			PostCode:   r.FormValue("post_code"),
+
+		},
+	}
+
+	order,err:= s.SaveOrder(user,checkoutRequest)
+	if err!= nil {
+        SetFlash(w,r,"error","gagal menyimpan order")
+        http.Redirect(w, r, "/carts", http.StatusSeeOther)
+    }
+
+	ClearCart(s.DB,cartID)
+
+	SetFlash(w,r,"success","data order berhasil disimpan")
+	http.Redirect(w, r, "/orders/"+order.ID, http.StatusSeeOther)
+
+
+	// fmt.Println(user)
+
+	// _ = render.HTML(w,http.StatusOK, "checkout",map[string]interface{}{
+	// 	"user": user,
+	// })
 }
 
 // func (server *Server) ShowOrder(w http.ResponseWriter, r *http.Request) {
@@ -94,111 +144,110 @@ func (s *Server) Checkout(w http.ResponseWriter, r *http.Request) {
 // 	})
 // }
 
-// func (server *Server) getSelectedShippingCost(w http.ResponseWriter, r *http.Request) (float64, error) {
-// 	origin := os.Getenv("API_ONGKIR_ORIGIN")
-// 	destination := r.FormValue("city_id")
-// 	courier := r.FormValue("courier")
-// 	shippingFeeSelected := r.FormValue("shipping_fee")
+func (s *Server) getSelectedShippingCost(w http.ResponseWriter, r *http.Request) (float64, error) {
+	origin := os.Getenv("API_ONGKIR_ORIGIN")
+	destination := r.FormValue("city_id")
+	courier := r.FormValue("courier")
+	shippingFeeSelected := r.FormValue("shipping_fee")
 
-// 	cartID := GetShoppingCartID(w, r)
-// 	cart, _ := GetShoppingCart(server.DB, cartID)
+	cartID := GetShoppingCartID(w, r)
+	cart, _ := GetShoppingCart(s.DB, cartID)
 
-// 	if destination == "" {
-// 		return 0, errors.New("invalid destination")
-// 	}
+	if destination == "" {
+		return 0, errors.New("invalid destination")
+	}
 
-// 	shippingFeeOptions, err := server.CalculateShippingFee(models.ShippingFeeParams{
-// 		Origin:      origin,
-// 		Destination: destination,
-// 		Weight:      cart.TotalWeight,
-// 		Courier:     courier,
-// 	})
+	shippingFeeOptions, err := s.CalculateShippingFee(models.ShippingFeeParams{
+		Origin:      origin,
+		Destination: destination,
+		Weight:      cart.TotalWeight,
+		Courier:     courier,
+	})
 
-// 	if err != nil {
-// 		return 0, errors.New("failed shipping calculation")
-// 	}
+	if err != nil {
+		return 0, errors.New("failed shipping calculation")
+	}
 
-// 	var shippingCost float64
-// 	for _, shippingFeeOption := range shippingFeeOptions {
-// 		if shippingFeeOption.Service == shippingFeeSelected {
-// 			shippingCost = float64(shippingFeeOption.Fee)
-// 		}
-// 	}
+	var shippingCost float64
+	for _, shippingFeeOption := range shippingFeeOptions {
+		if shippingFeeOption.Service == shippingFeeSelected {
+			shippingCost = float64(shippingFeeOption.Fee)
+		}
+	}
 
-// 	return shippingCost, nil
-// }
+	return shippingCost, nil
+}
 
-// func (server *Server) SaveOrder(user *models.User, r *CheckoutRequest) (*models.Order, error) {
-// 	var orderItems []models.OrderItem
+func (s *Server) SaveOrder(user *models.User, r *CheckoutRequest) (*models.Order, error) {
+	var orderItems []models.OrderItem
 
-// 	orderID := uuid.New().String()
+	// orderID := uuid.New().String()
 
-// 	paymentURL, err := server.createPaymentURL(user, r, orderID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	// paymentURL, err := s.createPaymentURL(user, r, orderID)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-// 	if len(r.Cart.CartItems) > 0 {
-// 		for _, cartItem := range r.Cart.CartItems {
-// 			orderItems = append(orderItems, models.OrderItem{
-// 				ProductID:       cartItem.ProductID,
-// 				Qty:             cartItem.Qty,
-// 				BasePrice:       cartItem.BasePrice,
-// 				BaseTotal:       cartItem.BaseTotal,
-// 				TaxAmount:       cartItem.TaxAmount,
-// 				TaxPercent:      cartItem.TaxPercent,
-// 				DiscountAmount:  cartItem.DiscountAmount,
-// 				DiscountPercent: cartItem.DiscountPercent,
-// 				SubTotal:        cartItem.SubTotal,
-// 				Sku:             cartItem.Product.Sku,
-// 				Name:            cartItem.Product.Name,
-// 				Weight:          cartItem.Product.Weight,
-// 			})
-// 		}
-// 	}
+	if len(r.Cart.CartItems) > 0 {
+		for _, cartItem := range r.Cart.CartItems {
+			orderItems = append(orderItems, models.OrderItem{
+				ProductID:       cartItem.ProductID,
+				Qty:             cartItem.Qty,
+				BasePrice:       cartItem.BasePrice,
+				BaseTotal:       cartItem.BaseTotal,
+				TaxAmount:       cartItem.TaxAmount,
+				TaxPercent:      cartItem.TaxPercent,
+				DiscountAmount:  cartItem.DiscountAmount,
+				DiscountPercent: cartItem.DiscountPercent,
+				SubTotal:        cartItem.SubTotal,
+				Sku:             cartItem.Product.Sku,
+				Name:            cartItem.Product.Name,
+				Weight:          cartItem.Product.Weight,
+			})
+		}
+	}
 
-// 	orderCustomer := &models.OrderCustomer{
-// 		UserID:     user.ID,
-// 		FirstName:  r.ShippingAddress.FirstName,
-// 		LastName:   r.ShippingAddress.LastName,
-// 		CityID:     r.ShippingAddress.CityID,
-// 		ProvinceID: r.ShippingAddress.ProvinceID,
-// 		Address1:   r.ShippingAddress.Address1,
-// 		Address2:   r.ShippingAddress.Address2,
-// 		Phone:      r.ShippingAddress.Phone,
-// 		Email:      r.ShippingAddress.Email,
-// 		PostCode:   r.ShippingAddress.PostCode,
-// 	}
+	orderCustomer := &models.OrderCustomer{
+		UserID:     user.ID,
+		FirstName:  r.ShippingAddress.FirstName,
+		LastName:   r.ShippingAddress.LastName,
+		CityID:     r.ShippingAddress.CityID,
+		ProvinceID: r.ShippingAddress.ProvinceID,
+		Address1:   r.ShippingAddress.Address1,
+		Address2:   r.ShippingAddress.Address2,
+		Phone:      r.ShippingAddress.Phone,
+		Email:      r.ShippingAddress.Email,
+		PostCode:   r.ShippingAddress.PostCode,
+	}
 
-// 	orderData := &models.Order{
-// 		ID:                  orderID,
-// 		UserID:              user.ID,
-// 		OrderItems:          orderItems,
-// 		OrderCustomer:       orderCustomer,
-// 		Status:              0,
-// 		OrderDate:           time.Now(),
-// 		PaymentDue:          time.Now().AddDate(0, 0, 7),
-// 		PaymentStatus:       consts.OrderPaymentStatusUnpaid,
-// 		BaseTotalPrice:      r.Cart.BaseTotalPrice,
-// 		TaxAmount:           r.Cart.TaxAmount,
-// 		TaxPercent:          r.Cart.TaxPercent,
-// 		DiscountAmount:      r.Cart.DiscountAmount,
-// 		DiscountPercent:     r.Cart.DiscountPercent,
-// 		ShippingCost:        decimal.NewFromFloat(r.ShippingFee.Fee),
-// 		GrandTotal:          r.Cart.GrandTotal,
-// 		ShippingCourier:     r.ShippingFee.Courier,
-// 		ShippingServiceName: r.ShippingFee.PackageName,
-// 		PaymentToken:        sql.NullString{String: paymentURL, Valid: true},
-// 	}
+	orderData := &models.Order{
+		UserID:              user.ID,
+		OrderItems:          orderItems,
+		OrderCustomer:       orderCustomer,
+		Status:              0,
+		OrderDate:           time.Now(),
+		PaymentDue:          time.Now().AddDate(0, 0, 7),
+		PaymentStatus:       "unpaid",
+		BaseTotalPrice:      r.Cart.BaseTotalPrice,
+		TaxAmount:           r.Cart.TaxAmount,
+		TaxPercent:          r.Cart.TaxPercent,
+		DiscountAmount:      r.Cart.DiscountAmount,
+		DiscountPercent:     r.Cart.DiscountPercent,
+		ShippingCost:        decimal.NewFromFloat(r.ShippingFee.Fee),
+		GrandTotal:          r.Cart.GrandTotal,
+		ShippingCourier:     r.ShippingFee.Courier,
+		ShippingServiceName: r.ShippingFee.PackageName,
+		// PaymentToken:        sql.NullString{String: paymentURL, Valid: true},
+	}
 
-// 	orderModel := models.Order{}
-// 	order, err := orderModel.CreateOrder(server.DB, orderData)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	orderModel := models.Order{}
+	order, err := orderModel.CreateOrder(s.DB, orderData)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return order, nil
-// }
+	return order, nil
+}
 
 // func (server *Server) createPaymentURL(user *models.User, r *CheckoutRequest, orderID string) (string, error) {
 // 	midtransServerKey := os.Getenv("API_MIDTRANS_SERVER_KEY")
