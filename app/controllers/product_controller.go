@@ -39,6 +39,7 @@ func (s *Server) Products(w http.ResponseWriter,r *http.Request) {
 	_ = render.HTML(w,http.StatusOK, "products",map[string]interface{}{
 		"products": products,
 		"pagination":pagination,
+		"user": s.CurrentUser(w,r),
 	})
 }
 
@@ -64,5 +65,6 @@ func (s *Server) GetProductBySlug(w http.ResponseWriter, r *http.Request){
 		"product": product,
 		"success": GetFlash(w,r,"success"),
 		"error": GetFlash(w,r,"error"),
+		"user": s.CurrentUser(w,r),
 	})
 }
