@@ -1,6 +1,7 @@
 package models
 
 import (
+	"AntiqueGo/app/consists"
 	"database/sql"
 	"strconv"
 	"strings"
@@ -69,6 +70,39 @@ func (o *Order) CreateOrder (db *gorm.DB, order *Order) (*Order, error) {
 
 }
 
+func (o *Order) FindByID(db *gorm.DB, id string) (*Order, error) {
+	var err error
+    var order Order
+
+    err=db.Debug().Preload("User").Preload("OrderItems").Preload("OrderCustomer").Preload("OrderItems.Product").Model(&Order{}).Where("id=?", id).First(&order).Error
+    if err!= nil {
+        return nil,err
+    }
+    return &order,nil
+}
+
+func (o *Order) IsPaid() bool{
+	return o.PaymentStatus == consists.OrderPaymentStatusPaid
+}
+
+func (o *Order) GetStatusLabel()string{
+	var statusLabel string
+
+	switch o.Status {
+	case consists.OrderStatusPending:
+		statusLabel = "PENDING"
+	case consists.OrderStatusDelivered:
+		statusLabel = "DELIVERED"
+	case consists.OrderStatusReceived:
+		statusLabel = "RECEIVED"
+	case consists.OrderStatusCancelled:
+		statusLabel = "CANCELLED"
+	default:
+		statusLabel = "UNKNOWN"
+	}
+
+	return statusLabel
+}
 
 func generateOrderNumber(db *gorm.DB) string{
 	now := time.Now()

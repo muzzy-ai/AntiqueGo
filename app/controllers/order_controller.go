@@ -1,10 +1,12 @@
 package controllers
 
 import (
-	// "database/sql"
+
 	// "errors"
-	// "database/sql"
+
+	"database/sql"
 	"errors"
+
 	// "fmt"
 	"net/http"
 	"os"
@@ -18,15 +20,20 @@ import (
 
 	// "github.com/gorilla/mux"
 	// "github.com/google/uuid"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/snap"
 	"github.com/shopspring/decimal"
+	"github.com/unrolled/render"
+
 	// "github.com/unrolled/render"
 
 	// "github.com/google/uuid"
 	// "github.com/midtrans/midtrans-go"
 	// "github.com/midtrans/midtrans-go/snap"
 
-	// "AntiqueGo/app/consts"
-
+	"AntiqueGo/app/consists"
 	"AntiqueGo/app/models"
 	// "github.com/shopspring/decimal"
 )
@@ -64,6 +71,7 @@ func (s *Server) Checkout(w http.ResponseWriter, r *http.Request) {
 	if !IsLoggedIn(r){
 		SetFlash(w,r,"error","anda perlu login")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
 	}
 
 	user := s.CurrentUser(w,r)
@@ -100,8 +108,9 @@ func (s *Server) Checkout(w http.ResponseWriter, r *http.Request) {
 
 	order,err:= s.SaveOrder(user,checkoutRequest)
 	if err!= nil {
-        SetFlash(w,r,"error","gagal menyimpan order")
+        SetFlash(w,r,"error","proses checkout gagal")
         http.Redirect(w, r, "/carts", http.StatusSeeOther)
+		return
     }
 
 	ClearCart(s.DB,cartID)
@@ -117,32 +126,32 @@ func (s *Server) Checkout(w http.ResponseWriter, r *http.Request) {
 	// })
 }
 
-// func (server *Server) ShowOrder(w http.ResponseWriter, r *http.Request) {
-// 	render := render.New(render.Options{
-// 		Layout:     "layout",
-// 		Extensions: []string{".html", ".tmpl"},
-// 	})
+func (s *Server) ShowOrder(w http.ResponseWriter, r *http.Request) {
+	render := render.New(render.Options{
+		Layout:     "layout",
+		Extensions: []string{".html", ".tmpl"},
+	})
 
-// 	vars := mux.Vars(r)
+	vars := mux.Vars(r)
 
-// 	if vars["id"] == "" {
-// 		http.Redirect(w, r, "/products", http.StatusSeeOther)
-// 		return
-// 	}
+	if vars["id"] == "" {
+		http.Redirect(w, r, "/products", http.StatusSeeOther)
+		return
+	}
 
-// 	orderModel := models.Order{}
-// 	order, err := orderModel.FindByID(server.DB, vars["id"])
-// 	if err != nil {
-// 		http.Redirect(w, r, "/products", http.StatusSeeOther)
-// 		return
-// 	}
+	orderModel := models.Order{}
+	order, err := orderModel.FindByID(s.DB, vars["id"])
+	if err != nil {
+		http.Redirect(w, r, "/products", http.StatusSeeOther)
+		return
+	}
 
-// 	_ = render.HTML(w, http.StatusOK, "show_order", map[string]interface{}{
-// 		"order":   order,
-// 		"success": flash.GetFlash(w, r, "success"),
-// 		"user":    auth.CurrentUser(server.DB, w, r),
-// 	})
-// }
+	_ = render.HTML(w, http.StatusOK, "show_order", map[string]interface{}{
+		"order":   order,
+		"success": GetFlash(w, r, "success"),
+		"user":    s.CurrentUser( w, r),
+	})
+}
 
 func (s *Server) getSelectedShippingCost(w http.ResponseWriter, r *http.Request) (float64, error) {
 	origin := os.Getenv("API_ONGKIR_ORIGIN")
@@ -181,12 +190,12 @@ func (s *Server) getSelectedShippingCost(w http.ResponseWriter, r *http.Request)
 func (s *Server) SaveOrder(user *models.User, r *CheckoutRequest) (*models.Order, error) {
 	var orderItems []models.OrderItem
 
-	// orderID := uuid.New().String()
+	orderID := uuid.New().String()
 
-	// paymentURL, err := s.createPaymentURL(user, r, orderID)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	paymentURL, err := s.createPaymentURL(user, r, orderID)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(r.Cart.CartItems) > 0 {
 		for _, cartItem := range r.Cart.CartItems {
@@ -221,13 +230,14 @@ func (s *Server) SaveOrder(user *models.User, r *CheckoutRequest) (*models.Order
 	}
 
 	orderData := &models.Order{
+		ID:                  orderID,
 		UserID:              user.ID,
 		OrderItems:          orderItems,
 		OrderCustomer:       orderCustomer,
 		Status:              0,
 		OrderDate:           time.Now(),
 		PaymentDue:          time.Now().AddDate(0, 0, 7),
-		PaymentStatus:       "unpaid",
+		PaymentStatus:       consists.OrderPaymentStatusUnpaid,
 		BaseTotalPrice:      r.Cart.BaseTotalPrice,
 		TaxAmount:           r.Cart.TaxAmount,
 		TaxPercent:          r.Cart.TaxPercent,
@@ -237,7 +247,7 @@ func (s *Server) SaveOrder(user *models.User, r *CheckoutRequest) (*models.Order
 		GrandTotal:          r.Cart.GrandTotal,
 		ShippingCourier:     r.ShippingFee.Courier,
 		ShippingServiceName: r.ShippingFee.PackageName,
-		// PaymentToken:        sql.NullString{String: paymentURL, Valid: true},
+		PaymentToken:        sql.NullString{String: paymentURL, Valid: true},
 	}
 
 	orderModel := models.Order{}
@@ -249,32 +259,32 @@ func (s *Server) SaveOrder(user *models.User, r *CheckoutRequest) (*models.Order
 	return order, nil
 }
 
-// func (server *Server) createPaymentURL(user *models.User, r *CheckoutRequest, orderID string) (string, error) {
-// 	midtransServerKey := os.Getenv("API_MIDTRANS_SERVER_KEY")
+func (s *Server) createPaymentURL(user *models.User, r *CheckoutRequest, orderID string) (string, error) {
+	midtransServerKey := os.Getenv("API_MIDTRANS_SERVER_KEY")
 
-// 	midtrans.ServerKey = midtransServerKey
+	midtrans.ServerKey = midtransServerKey
 
-// 	var enabledPaymentTypes []snap.SnapPaymentType
+	var enabledPaymentTypes []snap.SnapPaymentType
 
-// 	enabledPaymentTypes = append(enabledPaymentTypes, snap.AllSnapPaymentType...)
+	enabledPaymentTypes = append(enabledPaymentTypes, snap.AllSnapPaymentType...)
 
-// 	snapRequest := &snap.Request{
-// 		TransactionDetails: midtrans.TransactionDetails{
-// 			OrderID:  orderID,
-// 			GrossAmt: r.Cart.GrandTotal.IntPart(),
-// 		},
-// 		CustomerDetail: &midtrans.CustomerDetails{
-// 			FName: user.FirstName,
-// 			LName: user.LastName,
-// 			Email: user.Email,
-// 		},
-// 		EnabledPayments: enabledPaymentTypes,
-// 	}
+	snapRequest := &snap.Request{
+		TransactionDetails: midtrans.TransactionDetails{
+			OrderID:  orderID,
+			GrossAmt: r.Cart.GrandTotal.IntPart(),
+		},
+		CustomerDetail: &midtrans.CustomerDetails{
+			FName: user.FirstName,
+			LName: user.LastName,
+			Email: user.Email,
+		},
+		EnabledPayments: enabledPaymentTypes,
+	}
 
-// 	snapResponse, err := snap.CreateTransaction(snapRequest)
-// 	if err != nil {
-// 		return "", err
-// 	}
+	snapResponse, err := snap.CreateTransaction(snapRequest)
+	if err != nil {
+		return "", err
+	}
 
-// 	return snapResponse.RedirectURL, nil
-// }
+	return snapResponse.RedirectURL, nil
+}

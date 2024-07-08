@@ -29,6 +29,7 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/carts/remove/{id}",s.RemoveItemByID).Methods("GET")
 
 	s.Router.HandleFunc("/orders/checkout", s.Checkout).Methods("POST")
+	s.Router.HandleFunc("/orders/{id}", s.ShowOrder).Methods("GET")
 
 
 	staticFileDirectory := http.Dir("./assets/")
