@@ -146,6 +146,13 @@ func (s *Server) ShowOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// paymentModel := models.Payment{}
+	// payment,err := paymentModel.PaymentFindByID(s.DB, vars["id"])
+	// if err!= nil {
+    //     http.Redirect(w, r, "/products", http.StatusSeeOther)
+    //     return
+    // }
+
 	_ = render.HTML(w, http.StatusOK, "show_order", map[string]interface{}{
 		"order":   order,
 		"success": GetFlash(w, r, "success"),

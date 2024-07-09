@@ -157,3 +157,10 @@ func intToRoman(num int) string {
 	}
 	return roman
 }
+
+func (o *Order) MarkAsPaid(db *gorm.DB) error{
+	o.PaymentStatus = consists.OrderPaymentStatusPaid
+    o.Status=1
+
+    return db.Debug().Save(o).Error
+}
