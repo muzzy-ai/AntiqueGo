@@ -81,6 +81,18 @@ func (o *Order) FindByID(db *gorm.DB, id string) (*Order, error) {
     return &order,nil
 }
 
+func (o *Order) FindOrderByIdUser(db *gorm.DB, userID, ID string)(*Order,error){
+	var err error
+    var order Order
+
+    err=db.Debug().Preload("User").Preload("OrderItems").Preload("OrderCustomer").Preload("OrderItems.Product").Model(&Order{}).Where("user_id=? AND id = ?", userID,ID).First(&order).Error
+    if err!= nil {
+        return nil,err
+    }
+    return &order,nil
+
+}
+
 func (o *Order) IsPaid() bool{
 	return o.PaymentStatus == consists.OrderPaymentStatusPaid
 }
@@ -163,4 +175,13 @@ func (o *Order) MarkAsPaid(db *gorm.DB) error{
     o.Status=1
 
     return db.Debug().Save(o).Error
+}
+
+func (o *Order) GetLatestOrderID(db *gorm.DB) (string, error) {
+	var order Order
+	err := db.Debug().Order("created_at DESC").First(&order).Error
+	if err != nil {
+		return "", err
+	}
+	return order.ID, nil
 }

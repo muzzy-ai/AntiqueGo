@@ -116,3 +116,12 @@ func (p *Payment) CreatePayment(db *gorm.DB, payment *Payment) (*Payment, error)
 
 	return payment, nil
 }
+
+func (p *Payment) FindPaymentsByOrderID(db *gorm.DB, orderID string) (*Payment, error) {
+	var payment Payment
+	err := db.Debug().Where("order_id = ?", orderID).First(&payment).Error
+	if err != nil {
+		return nil, err
+	}
+	return &payment, nil
+}

@@ -80,6 +80,13 @@ var sessionUser = "user-session"
 
 func SetSessionStore(sessionKey string) {
 	store = sessions.NewCookieStore([]byte(sessionKey))
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   3600, // misalnya, sesuaikan dengan kebutuhan Anda
+		HttpOnly: true,
+		Secure:   true, // set true jika Anda memakai HTTPS
+		SameSite: http.SameSiteStrictMode,
+	}
 }
 
 func (s *Server) Initialize(appConfig AppConfig, dbConfig DBConfig) {

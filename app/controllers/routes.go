@@ -33,6 +33,8 @@ func (s *Server) InitializeRoutes() {
 
 	s.Router.HandleFunc("/payments/midtrans", s.Midtrans).Methods("POST")
 
+	s.Router.HandleFunc("/carts/my-order", s.ShowMyOrder).Methods("GET")
+
 
 	staticFileDirectory := http.Dir("./assets/")
 	staticFileHandler := http.StripPrefix("/public/", http.FileServer(staticFileDirectory))

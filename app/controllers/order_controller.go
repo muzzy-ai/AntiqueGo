@@ -6,6 +6,9 @@ import (
 
 	"database/sql"
 	"errors"
+	"fmt"
+
+	// "strconv"
 
 	// "fmt"
 	"net/http"
@@ -141,13 +144,14 @@ func (s *Server) ShowOrder(w http.ResponseWriter, r *http.Request) {
 
 	orderModel := models.Order{}
 	order, err := orderModel.FindByID(s.DB, vars["id"])
+	// orderLastest,err := orderModel.GetLatestOrderID(s.DB)
 	if err != nil {
 		http.Redirect(w, r, "/products", http.StatusSeeOther)
 		return
 	}
 
 	// paymentModel := models.Payment{}
-	// payment,err := paymentModel.PaymentFindByID(s.DB, vars["id"])
+	// payment,err := paymentModel.FindPaymentsByOrderID(s.DB, orderLastest)
 	// if err!= nil {
     //     http.Redirect(w, r, "/products", http.StatusSeeOther)
     //     return
@@ -157,6 +161,53 @@ func (s *Server) ShowOrder(w http.ResponseWriter, r *http.Request) {
 		"order":   order,
 		"success": GetFlash(w, r, "success"),
 		"user":    s.CurrentUser( w, r),
+		// "payment": payment,
+	})
+}
+
+func (s *Server) ShowMyOrder(w http.ResponseWriter, r *http.Request) {
+	render := render.New(render.Options{
+		Layout:     "layout",
+		Extensions: []string{".html", ".tmpl"},
+	})
+
+	session, _ := store.Get(r, sessionUser)
+	userID, ok := session.Values["id"].(string)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	orderModel := models.Order{}
+	// orderID := orderModel.ID
+
+	orderLastest,err := orderModel.GetLatestOrderID(s.DB)
+	if err!= nil {
+        http.Redirect(w, r, "/products", http.StatusSeeOther)
+        return
+    }
+	paymentModel := models.Payment{}
+	payment, err := paymentModel.FindPaymentsByOrderID(s.DB, orderLastest)
+	if err != nil {
+		http.Redirect(w, r, "/products", http.StatusSeeOther)
+		return
+	}
+
+	order, err := orderModel.FindOrderByIdUser(s.DB, userID,orderLastest)
+	if err != nil {
+		http.Redirect(w, r, "/products", http.StatusSeeOther)
+		return
+	}
+
+	    // Debugging Log
+    fmt.Println("Payment: ", payment)
+    fmt.Println("PaymentType: ", payment.PaymentType)
+
+	_ = render.HTML(w, http.StatusOK, "show_my_order", map[string]interface{}{
+		"order":    order,
+		"payment": payment,
+		"success":  GetFlash(w, r, "success"),
+		"user":     s.CurrentUser(w, r),
 	})
 }
 
