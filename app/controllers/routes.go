@@ -35,6 +35,7 @@ func (s *Server) InitializeRoutes() {
 
 	s.Router.HandleFunc("/carts/my-order", s.ShowMyOrder).Methods("GET")
 
+	s.Router.HandleFunc("/admin/dashboard", s.AdminDashboard).Methods("GET")
 
 	staticFileDirectory := http.Dir("./assets/")
 	staticFileHandler := http.StripPrefix("/public/", http.FileServer(staticFileDirectory))

@@ -9,6 +9,7 @@ import (
 
 type User struct {
 	ID            string `gorm:"size:36;not null;uniqueIndex;primary_key"`
+	RoleID 		  string `gorm:size:36;index"`
 	FirstName     string `gorm:"size:100;not null"`
 	LastName      string `gorm:"size:100;not null"`
 	Email         string `gorm:"size:100;not null;uniqueIndex"`
@@ -52,6 +53,7 @@ func (u *User) CreateUser(db *gorm.DB, param *User) (*User, error) {
 		LastName:  param.LastName,
 		Email:     param.Email,
 		Password:  param.Password,
+		RoleID:		 "null",
 	}
 
 	err := db.Debug().Create(&user).Error
@@ -60,4 +62,15 @@ func (u *User) CreateUser(db *gorm.DB, param *User) (*User, error) {
 	}
 
 	return user, nil
+}
+
+func (u *User) GetRoleIDByUserID(db *gorm.DB, userID string) (string, error) {
+	var user User
+	err := db.Debug().Model(User{}).Select("role_id").Where("id = ?", userID).
+		First(&user).Error
+	if err != nil {
+		return "", err
+	}
+
+	return user.RoleID, nil
 }

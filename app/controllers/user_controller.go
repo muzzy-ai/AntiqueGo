@@ -39,11 +39,25 @@ func (s *Server) DoLogin(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-	session, _ := store.Get(r,sessionUser)
-	session.Values["id"] = user.ID
-	session.Save(r, w)
+	roleModel := models.Role{}
+    hasRole, err := roleModel.HasRole(s.DB, user.ID)
+    if err != nil {
+        // Handle error (you might want to redirect to an error page or log the error)
+        SetFlash(w, r, "error", "Failed to check user role")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
 
-	http.Redirect(w,r,"/",http.StatusSeeOther)
+    if hasRole {
+        http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
+    } else {
+        // Set user ID in session and redirect to homepage
+        session, _ := store.Get(r, sessionUser)
+        session.Values["id"] = user.ID
+        session.Save(r, w)
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+    }
+
 
 }
 
@@ -108,3 +122,5 @@ func (s *Server) Logout (w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w,r,"/",http.StatusSeeOther)
 }
+
+

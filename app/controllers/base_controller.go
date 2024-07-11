@@ -353,3 +353,4 @@ func (s *Server) CurrentUser(w http.ResponseWriter, r *http.Request) *models.Use
 	}
 	return user
 }
+

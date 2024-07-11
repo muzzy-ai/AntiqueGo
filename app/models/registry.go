@@ -20,5 +20,6 @@ func RegisterModel()[]Model{
 		{Model:OrderCustomer{}},
 		{Model:Cart{}},
         {Model:CartItem{}},
+		{Model:Role{}},
 	}
 }

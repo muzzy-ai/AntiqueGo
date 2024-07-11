@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+
+    <title>Admin AntiqueGo</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:200i,300,300i,400,400i,500,500i,600,600i,700,700i,800,800i,900,900i&display=swap" rel="stylesheet"/>
+
+    <!-- Icons -->
+    <link href="/public/css/nucleo-icons.css" rel="stylesheet" type="text/css"/>
+    <link href="/public/css/font-awesome.css" rel="stylesheet" type="text/css"/>
+
+    <!-- Jquery UI -->
+    <link type="text/css" href="/public/css/jquery-ui.css" rel="stylesheet"/>
+
+    <!-- Argon CSS -->
+    <link type="text/css" href="/public/css/argon-design-system.min.css" rel="stylesheet"/>
+
+    <!-- Main CSS-->
+    <link type="text/css" href="/public/css/style.css" rel="stylesheet"/>
+
+    <!-- Optional Plugins-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+</head>
+
+<body>
+    <header class="header clearfix">
+        <div class="top-bar d-none d-sm-block">
+            <div class="container">
+                <div class="row">
+                    <div class="col-6 text-left">
+                        <ul class="top-links contact-info">
+                            <li><i class="fa fa-envelope-o"></i> <a href="https://mail.google.com/mail/u/0/?view=cm&tf=1&fs=1&to=antiquegordyn2@gmail.com">antiquegordyn2@gmail.com</a></li>
+                            <li><i class="fa fa-whatsapp"></i>087787881058</li>
+                        </ul>
+                    </div>
+                    <div class="col-6 text-right">
+                        <ul class="top-links account-links">
+
+                            <li><i class="fa fa-user-circle-o"></i> <a href="#">Admin</a></li>
+                            <li><i class="fa fa-power-off"></i> <a href="/logout">Logout</a></li>
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="header-main border-top">
+            <div class="container">
+                <div class="row justify-content-center align-items-center">
+                    <div class="col-lg-3 col-12 col-sm-6 text-center">
+                        <a class="navbar-brand" href="/">
+                            <i class="fa fa-shopping-bag fa-3x"></i> 
+                            <span class="logo">Admin Antique Gordyn</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-12 col-sm-6 text-right">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Products
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" href="/add-product">Add Product</a>
+                                <a class="dropdown-item" href="/edit-product">Edit Product</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    {{ yield }}
+    
+    <!-- Core -->
+    <script src="/public/js/core/jquery.min.js"></script>
+    <script src="/public/js/core/popper.min.js"></script>
+    <script src="/public/js/core/bootstrap.min.js"></script>
+    <script src="/public/js/core/jquery-ui.min.js"></script>
+
+    <!-- Optional plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <!-- Argon JS -->
+    <script src="/public/js/argon-design-system.js"></script>
+
+    <!-- Main JS-->
+    <script src="/public/js/main.js"></script>
+</body>
+
+</html>

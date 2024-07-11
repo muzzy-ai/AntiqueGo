@@ -6,7 +6,7 @@ import (
 
 	"database/sql"
 	"errors"
-	"fmt"
+	// "fmt"
 
 	// "strconv"
 
@@ -200,8 +200,6 @@ func (s *Server) ShowMyOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	    // Debugging Log
-    fmt.Println("Payment: ", payment)
-    fmt.Println("PaymentType: ", payment.PaymentType)
 
 	_ = render.HTML(w, http.StatusOK, "show_my_order", map[string]interface{}{
 		"order":    order,
