@@ -24,23 +24,65 @@ func (s *Server) Products(w http.ResponseWriter,r *http.Request) {
 
 	perPage := 9
 
-	productModel :=models.Product{}
-	products,totalRows,err := productModel.GetProducts(s.DB,perPage,page)
-	if err!= nil {
-		return 
+	searchQuery := q.Get("search")
+
+	if searchQuery != "" {
+        productModel := models.Product{}
+        products, totalRows, err := productModel.SearchProducts(s.DB, searchQuery, perPage, page)
+		if err!= nil {
+            return 
+        }
+		
+
+		pagination,_:=GetPaginationLinks(s.AppConfig, PaginationParams{
+			Path:	"products",
+			TotalRows: int64(totalRows),
+			PerPage: int64(perPage),
+			CurrentPage: int64(page),
+		})
+	
+		cartID := GetShoppingCartID(w, r)
+		cart, _ := GetShoppingCart(s.DB, cartID)
+		itemCount := len(cart.CartItems)
+	
+		_ = render.HTML(w,http.StatusOK, "products",map[string]interface{}{
+			"products": products,
+			"pagination":pagination,
+			"user": s.CurrentUser(w,r),
+			"itemCount": itemCount,
+		})
+		return
+
+    } else {
+		productModel :=models.Product{}
+		products,totalRows,err := productModel.GetProducts(s.DB,perPage,page)
+		if err!= nil {
+            return 
+        }
+		
+		
+		pagination,_:=GetPaginationLinks(s.AppConfig, PaginationParams{
+			Path:	"products",
+			TotalRows: int64(totalRows),
+			PerPage: int64(perPage),
+			CurrentPage: int64(page),
+		})
+	
+		cartID := GetShoppingCartID(w, r)
+		cart, _ := GetShoppingCart(s.DB, cartID)
+		itemCount := len(cart.CartItems)
+	
+		_ = render.HTML(w,http.StatusOK, "products",map[string]interface{}{
+			"products": products,
+			"pagination":pagination,
+			"user": s.CurrentUser(w,r),
+			"itemCount": itemCount,
+		})
+		return
+
 	}
 
-	pagination,_:=GetPaginationLinks(s.AppConfig, PaginationParams{
-		Path:	"products",
-		TotalRows: int64(totalRows),
-		PerPage: int64(perPage),
-        CurrentPage: int64(page),
-	})
-	_ = render.HTML(w,http.StatusOK, "products",map[string]interface{}{
-		"products": products,
-		"pagination":pagination,
-		"user": s.CurrentUser(w,r),
-	})
+
 }
 
 func (s *Server) GetProductBySlug(w http.ResponseWriter, r *http.Request){
@@ -61,10 +103,15 @@ func (s *Server) GetProductBySlug(w http.ResponseWriter, r *http.Request){
         return 
     }
 
+	cartID := GetShoppingCartID(w, r)
+	cart, _ := GetShoppingCart(s.DB, cartID)
+	itemCount := len(cart.CartItems)
+
 	_=render.HTML(w,http.StatusOK,"product",map[string]interface{}{
 		"product": product,
 		"success": GetFlash(w,r,"success"),
 		"error": GetFlash(w,r,"error"),
 		"user": s.CurrentUser(w,r),
+		"itemCount": itemCount,
 	})
 }

@@ -65,13 +65,9 @@
                     </div>
                     <div class="col-lg-2 col-12 col-sm-6 text-right">
                         <div class="right-icons d-none d-lg-block">
-                            <div class="single-icon wishlist">
-                                <a href="#"><i class="fa fa-heart-o fa-2x"></i></a>
-                                <span class="badge badge-default">5</span>
-                            </div>
                             <div class="single-icon shopping-cart">
                                 <a href="/carts"><i class="fa fa-shopping-cart fa-2x"></i></a>
-                                <span class="badge badge-default">4</span>
+                                <span class="badge badge-default">{{.itemCount}}</span>
                             </div>
                         </div>
                     </div>
@@ -89,7 +85,7 @@
                 <div class="collapse navbar-collapse" id="main_nav">
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
-                            <a class="nav-link" href="/products">Home</a>
+                            <a class="nav-link" href="/">Home</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#footer">About</a>

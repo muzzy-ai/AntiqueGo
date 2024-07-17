@@ -104,6 +104,7 @@ func (s *Server) GetCart(w http.ResponseWriter,r *http.Request) {
 		"success": GetFlash(w,r,"success"),
 		"error": GetFlash(w,r,"error"),
 		"user": s.CurrentUser(w,r),
+		"itemCount" : len(items),
 	})
 }
 

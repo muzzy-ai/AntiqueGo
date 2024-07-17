@@ -13,7 +13,7 @@ type Product struct {
 	User             User
 	UserID           string `gorm:"size:36;index"`
 	ProductImages    []ProductImage
-	Category         []Category		 `gorm:"many2many:product_categories;"`
+	Category         []Category      `gorm:"many2many:product_categories;"`
 	Sku              string          `gorm:"size:100;index"`
 	Name             string          `gorm:"size:255"`
 	Slug             string          `gorm:"size:255"`
@@ -28,45 +28,71 @@ type Product struct {
 	DeletedAt        gorm.DeletedAt
 }
 
-func (p *Product) GetProducts(db *gorm.DB,perPage int,page int) (*[]Product,int64, error) {
+func (p *Product) GetProducts(db *gorm.DB, perPage int, page int) (*[]Product, int64, error) {
 	var err error
 	var products []Product
 	var count int64
 
-	err=db.Debug().Model(&Product{}).Count(&count).Error
-	if err!= nil {
-        return nil,0,err
-    }
+	err = db.Debug().Model(&Product{}).Count(&count).Error
+	if err != nil {
+		return nil, 0, err
+	}
 
-	offset := (page-1)*perPage
-
+	offset := (page - 1) * perPage
 
 	err = db.Debug().Model(&Product{}).Order("created_at desc").Limit(perPage).Offset(offset).Find(&products).Error
 	if err != nil {
-		return nil,0,err
+		return nil, 0, err
 	}
 
-	return &products,count,err
+	return &products, count, err
 }
 
-func (p *Product) FindBySlug(db *gorm.DB, slug string)(*Product,error){
+func (p *Product) FindBySlug(db *gorm.DB, slug string) (*Product, error) {
 	var err error
 	var product Product
 
-	err=db.Debug().Preload("ProductImages").Model(&Product{}).Where("slug=?", slug).First(&product).Error
+	err = db.Debug().Preload("ProductImages").Model(&Product{}).Where("slug=?", slug).First(&product).Error
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return &product,err
+	return &product, err
 }
 
-func (p *Product) FindByID(db *gorm.DB, productID string)(*Product,error){
+func (p *Product) FindByID(db *gorm.DB, productID string) (*Product, error) {
 	var err error
 	var product Product
 
-	err=db.Debug().Preload("ProductImages").Model(&Product{}).Where("id=?", productID).First(&product).Error
+	err = db.Debug().Preload("ProductImages").Model(&Product{}).Where("id=?", productID).First(&product).Error
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return &product,err
+	return &product, err
+}
+
+func (p *Product) SearchProducts(db *gorm.DB, query string, perPage, page int) (*[]Product, int64, error) {
+	var products []Product
+	var totalRows int64
+
+	offset := perPage * (page - 1)
+
+	// Construct the query to search for products by name or description containing the query string
+	// Using OR condition with LIKE for flexible search
+	db = db.Debug().Model(&Product{}).
+		Where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?", "%"+query+"%", "%"+query+"%").
+		Order("created_at desc").
+		Offset(offset).
+		Limit(perPage)
+
+	// Count total rows for pagination
+	if err := db.Model(&Product{}).Where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?", "%"+query+"%", "%"+query+"%").Count(&totalRows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Retrieve the products
+	if err := db.Find(&products).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return &products, totalRows, nil
 }
