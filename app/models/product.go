@@ -96,3 +96,10 @@ func (p *Product) SearchProducts(db *gorm.DB, query string, perPage, page int) (
 
 	return &products, totalRows, nil
 }
+
+func (p *Product) DeleteProduct(db *gorm.DB, productID string) error {
+	if err := db.Where("id = ?", productID).Delete(&Product{}).Error; err != nil {
+		return err
+	}
+	return nil
+}

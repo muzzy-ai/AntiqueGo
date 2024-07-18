@@ -1,0 +1,82 @@
+{{ define "admin_orders" }}
+<section class="breadcrumb-section pb-3 pt-3">
+    <div class="container">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/orders">Orders</a></li>
+            <li aria-current="page" class="breadcrumb-item active">Detail</li>
+        </ol>
+    </div>
+</section>
+<section class="product-page pb-4 pt-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="section-title">
+                    <h2>All Orders</h2>
+                </div>
+            </div>
+        </div>
+        {{ if .success }}
+        <div class="alert alert-success">
+            {{ range $i, $msg := .success }}
+            {{ $msg }}<br/>
+            {{ end }}
+        </div>
+        {{ end }}
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Order Code</th>
+                                        <th scope="col">Customer</th>
+                                        <th scope="col">Email</th>
+                                        <th scope="col">Items</th>
+                                        <th scope="col">Total</th>
+                                        <th scope="col">Note</th>
+                                        <th scope="col">Address</th>
+                                        <th scope="col">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{ range $index, $orderDetail := .orderDetails }}
+                                    <tr>
+                                        <th scope="row">{{ $index }}</th>
+                                        <td>#{{ $orderDetail.Order.Code }}</td>
+                                        <td>{{ $orderDetail.Order.User.FirstName }} {{ $orderDetail.Order.User.LastName }}</td>
+                                        <td>{{ $orderDetail.Order.User.Email }}</td>
+                                        <td>
+                                            <ul>
+                                                {{ range $item := $orderDetail.OrderItems }}
+                                                <li>{{ $item.Product.Name }} (Qty: {{ $item.Qty }})</li>
+                                                {{ end }}
+                                            </ul>
+                                        </td>
+                                        <td>{{ $orderDetail.Order.GrandTotal }}</td>
+                                        <td>{{ $orderDetail.Order.Note }}</td>
+                                        <td>{{ $orderDetail.OrderCustomer.Address1 }}, {{ $orderDetail.OrderCustomer.Address2 }}</td>
+                                        <td>
+                                            <span class="badge rounded-pill 
+                                                {{ if eq $orderDetail.Order.GetStatusLabel "PENDING" }}bg-warning{{ else if eq $orderDetail.Order.GetStatusLabel "RECEIVED" }}bg-primary{{ else }}bg-info{{ end }}">
+                                                {{ $orderDetail.Order.GetStatusLabel }}
+                                            </span>
+                                            <!-- Debugging output to check status value -->
+                                            <div style="display: none;">{{ printf "Status: %s" $orderDetail.Order.GetStatusLabel }}</div>
+                                        </td>
+                                    </tr>
+                                    {{ end }}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{{ end }}

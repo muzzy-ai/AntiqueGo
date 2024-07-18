@@ -26,6 +26,7 @@ type Order struct {
 	User                User
 	OrderItems          []OrderItem
 	OrderCustomer       *OrderCustomer
+	Shipment      		*Shipment
 	Code                string `gorm:"size:50;index"`
 	Status              int
 	OrderDate           time.Time
@@ -51,6 +52,15 @@ type Order struct {
 	UpdatedAt           time.Time
 	DeletedAt           gorm.DeletedAt
 }
+
+
+type OrderDetails struct {
+    Order         Order
+    OrderCustomer OrderCustomer
+    OrderItems    []OrderItem
+    Shipment      Shipment
+}
+
 
 func (o *Order) BeforeCreate (db *gorm.DB) error {
 	if o.ID == "" {
@@ -184,4 +194,34 @@ func (o *Order) GetLatestOrderID(db *gorm.DB) (string, error) {
 		return "", err
 	}
 	return order.ID, nil
+}
+
+func GetAllOrdersWithDetails(db *gorm.DB) ([]OrderDetails, error) {
+    var orders []Order
+    err := db.Preload("User").
+        Preload("OrderCustomer").
+        Preload("OrderItems.Product").
+        Preload("Shipment"). // Preload Shipment data
+        Find(&orders).Error
+    if err != nil {
+        return nil, err
+    }
+
+    var orderDetails []OrderDetails
+    for _, order := range orders {
+        // Initialize orderDetail
+        orderDetail := OrderDetails{
+            Order:         order,
+            OrderCustomer: *order.OrderCustomer,
+            OrderItems:    order.OrderItems,
+        }
+
+        // If shipment exists, assign it to orderDetail
+        if order.Shipment != nil {
+            orderDetail.Shipment = *order.Shipment
+        }
+
+        orderDetails = append(orderDetails, orderDetail)
+    }
+    return orderDetails, nil
 }

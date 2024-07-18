@@ -6,6 +6,8 @@ import (
 
 	"database/sql"
 	"errors"
+	"fmt"
+
 	// "fmt"
 
 	// "strconv"
@@ -181,32 +183,38 @@ func (s *Server) ShowMyOrder(w http.ResponseWriter, r *http.Request) {
 	orderModel := models.Order{}
 	// orderID := orderModel.ID
 
-	orderLastest,err := orderModel.GetLatestOrderID(s.DB)
-	if err!= nil {
-        http.Redirect(w, r, "/products", http.StatusSeeOther)
-        return
-    }
+	orderLastest, err := orderModel.GetLatestOrderID(s.DB)
+	if err != nil || orderLastest == "" {
+		// Set flash message
+		http.Redirect(w, r, "/products", http.StatusSeeOther)
+		fmt.Println("No orders found:", err)
+		return
+	}
 	paymentModel := models.Payment{}
 	payment, err := paymentModel.FindPaymentsByOrderID(s.DB, orderLastest)
 	if err != nil {
-		http.Redirect(w, r, "/products", http.StatusSeeOther)
-		return
+		// Jika pembayaran tidak ditemukan, set payment ke nil atau nilai default
+		payment = nil
+		// Anda juga dapat mencetak pesan log atau hanya mengabaikannya
+		fmt.Println("Payment not found for order ID:", orderLastest)
 	}
 
 	order, err := orderModel.FindOrderByIdUser(s.DB, userID,orderLastest)
 	if err != nil {
 		http.Redirect(w, r, "/products", http.StatusSeeOther)
+		fmt.Println(err.Error())
 		return
 	}
 
 	    // Debugging Log
 
-	_ = render.HTML(w, http.StatusOK, "show_my_order", map[string]interface{}{
-		"order":    order,
-		"payment": payment,
-		"success":  GetFlash(w, r, "success"),
-		"user":     s.CurrentUser(w, r),
-	})
+		_ = render.HTML(w, http.StatusOK, "show_my_order", map[string]interface{}{
+			"order":   order,
+			"payment": payment,
+			"success": GetFlash(w, r, "success"),
+			"error":   GetFlash(w, r, "error"),
+			"user":    s.CurrentUser(w, r),
+		})
 }
 
 func (s *Server) getSelectedShippingCost(w http.ResponseWriter, r *http.Request) (float64, error) {
