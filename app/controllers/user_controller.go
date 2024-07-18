@@ -49,6 +49,9 @@ func (s *Server) DoLogin(w http.ResponseWriter, r *http.Request) {
     }
 
     if hasRole {
+		session, _ := store.Get(r, sessionUser)
+        session.Values["id"] = user.ID
+        session.Save(r, w)
         http.Redirect(w, r, "/admin/dashboard", http.StatusSeeOther)
     } else {
         // Set user ID in session and redirect to homepage

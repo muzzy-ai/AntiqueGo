@@ -74,3 +74,8 @@ func (u *User) GetRoleIDByUserID(db *gorm.DB, userID string) (string, error) {
 
 	return user.RoleID, nil
 }
+
+// func IsAdmin(db *gorm.DB, userID string) (bool, error) {
+// 	roleModel := models.Role{}
+//     hasRole, err := roleModel.HasRole(s.DB, userID)
+// }

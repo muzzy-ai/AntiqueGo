@@ -34,6 +34,28 @@ func (s *Server) AdminOrders(w http.ResponseWriter, r *http.Request) {
         Extensions: []string{".html", ".tmpl"},
     })
 
+	user := s.CurrentUser(w, r)
+    if user == nil {
+        http.Redirect(w, r, "/login", http.StatusFound)
+        return
+    }
+
+    // Check if the user is an admin
+	roleModel := models.Role{}
+    hasRole, err := roleModel.HasRole(s.DB, user.ID)
+    if err != nil {
+        // Handle error (you might want to redirect to an error page or log the error)
+        SetFlash(w, r, "error", "Failed to check user role")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    if !hasRole {
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+    }
+
+	
+
     orderDetails, err := models.GetAllOrdersWithDetails(s.DB)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -43,6 +65,7 @@ func (s *Server) AdminOrders(w http.ResponseWriter, r *http.Request) {
     // Send data to the template
     if err := render.HTML(w, http.StatusOK, "admin_orders", map[string]interface{}{
         "orderDetails": orderDetails, // Ensure this matches the template expectation
+		"user": user,
     }); err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
@@ -103,6 +126,25 @@ func (s *Server) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 	})
 
 	user := s.CurrentUser(w, r)
+    if user == nil {
+        http.Redirect(w, r, "/login", http.StatusFound)
+        return
+    }
+
+    // Check if the user is an admin
+	roleModel := models.Role{}
+    hasRole, err := roleModel.HasRole(s.DB, user.ID)
+    if err != nil {
+        // Handle error (you might want to redirect to an error page or log the error)
+        SetFlash(w, r, "error", "Failed to check user role")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    if !hasRole {
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+    }
+
 
 	products, err := GetProductsWithImages(s.DB)
 	if err != nil {
@@ -111,7 +153,7 @@ func (s *Server) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = render.HTML(w, http.StatusOK, "admin_dashboard", map[string]interface{}{
-		"user":     user,
+		// "user":     user,
 		"products": products,
 	})
 }
