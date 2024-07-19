@@ -19,8 +19,15 @@ func (s *Server) Home(w http.ResponseWriter, r *http.Request) {
 	cart, _ := GetShoppingCart(s.DB, cartID)
 	itemCount := len(cart.CartItems)
 
+	products, err := GetProductsWithImages(s.DB)
+	if err != nil {
+		http.Error(w, "Failed to fetch products", http.StatusInternalServerError)
+		return
+	}
+
 	_ = render.HTML(w,http.StatusOK, "home",map[string]interface{}{
 		"user": user,
 		"itemCount": itemCount,
+		"products": products,
 	})
 }

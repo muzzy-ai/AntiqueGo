@@ -18,6 +18,7 @@ type ProductWithImage struct {
 	Description string
 	Price       decimal.Decimal
 	Stock       int
+	Slug 		string
 	ImagePath   string
 }
 
@@ -101,6 +102,7 @@ func GetProductsWithImages(db *gorm.DB) ([]ProductWithImage, error) {
 			p.description, 
 			p.price, 
 			p.stock, 
+			p.slug,
 			COALESCE(pi.path, '') as image_path
 		FROM products p
 		LEFT JOIN (
@@ -117,6 +119,7 @@ func GetProductsWithImages(db *gorm.DB) ([]ProductWithImage, error) {
 
 	return productsWithImages, nil
 }
+
 
 
 func (s *Server) AdminDashboard(w http.ResponseWriter, r *http.Request) {

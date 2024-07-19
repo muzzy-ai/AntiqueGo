@@ -59,6 +59,8 @@ func (s *Server) Products(w http.ResponseWriter,r *http.Request) {
 		if err!= nil {
             return 
         }
+
+		
 		
 		
 		pagination,_:=GetPaginationLinks(s.AppConfig, PaginationParams{
