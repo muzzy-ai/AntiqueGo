@@ -1,6 +1,11 @@
 {{ define "admin_dashboard" }}
 <section class="products-grid pb-4 pt-4">
     <div class="container">
+        <div class="row mb-2">
+            <div class="col-12 text-right">
+                <a href="/admin/products/new" class="btn btn-success btn-sm">Add Product</a>
+            </div>
+        </div>
         <div class="row">
             <div class="col-12">
                 <table class="table table-bordered">
@@ -18,7 +23,7 @@
                         {{ range .products }}
                         <tr>
                             <td>
-								<div class="d-flex mb-2">
+                                <div class="d-flex mb-2">
                                     <div class="flex-shrink-0">
                                         <img src="/public/{{.ImagePath}}" class="img-fluid" style="width: 40px; height: 50px;"/>
                                     </div>

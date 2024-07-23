@@ -12,22 +12,22 @@
         <div class="col-lg-5">
             <div class="card bg-secondary shadow border-0">
                 <div class="card-header bg-white pb-5">
-                    <div class="text-muted text-center mb-3"><small>Create new account</small></div>
-                    <div class="btn-wrapper text-center">
-                        <a href="#" class="btn btn-neutral btn-icon">
-                            <span class="btn-inner--icon"><img src="/public/img/icons/common/github.svg"></span>
-                            <span class="btn-inner--text">Github</span>
-                        </a>
-                        <a href="#" class="btn btn-neutral btn-icon">
-                            <span class="btn-inner--icon"><img src="/public/img/icons/common/google.svg"></span>
-                            <span class="btn-inner--text">Google</span>
-                        </a>
+                    <div class="text-muted text-center mb-3"><small>Create new account</small></div> <div class="card-header bg-white pb-5">
+                        <div class="text-center">
+                            <a class="navbar-brand" href="/">
+                                 <span class="logo">Antique Gordyn</span>
+                            </a>
+                        </div>
+                        <div class="text-center">
+                            <a class="navbar-brand" href="/">
+                                 <span class="logo">Register</span>
+                            </a>
+                        </div>
+                        <div class="btn-wrapper text-center">
+                        </div>
                     </div>
                 </div>
                 <div class="card-body px-lg-5 py-lg-5">
-                    <div class="text-center text-muted mb-4">
-                        <small>Or sign in with credentials</small>
-                    </div>
                     {{ if .error }}
                     <div class="alert alert-warning">
                         {{ range $i, $msg := .error }}

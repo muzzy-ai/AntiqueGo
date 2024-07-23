@@ -41,6 +41,10 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/admin/orders", s.AdminOrders).Methods("GET")
     // s.Router.HandleFunc("/admin/orders/{id}/done", s.MarkOrderAsDone).Methods("POST")
 
+	s.Router.HandleFunc("/admin/products/new", s.NewProduct).Methods("GET")
+	s.Router.HandleFunc("/admin/products/create", s.CreateProduct).Methods("POST")
+
+
 	staticFileDirectory := http.Dir("./assets/")
 	staticFileHandler := http.StripPrefix("/public/", http.FileServer(staticFileDirectory))
 	
