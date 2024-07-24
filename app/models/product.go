@@ -42,11 +42,12 @@ type ProductWithImage struct {
 
 func (p *Product) GetProducts(db *gorm.DB, perPage int, page int) ([]ProductWithImage, int64, error) {
 	var count int64
-
-
 	var productsWithImages []ProductWithImage
 
-	// Query untuk mengambil satu gambar per produk
+	// Calculate offset
+	offset := (page - 1) * perPage
+
+	// Query to get products with images, excluding those with non-null deletedAt
 	query := `
 		SELECT 
 			p.id, 
@@ -62,16 +63,28 @@ func (p *Product) GetProducts(db *gorm.DB, perPage int, page int) ([]ProductWith
 			FROM product_images
 			ORDER BY product_id, id
 		) pi ON p.id = pi.product_id
+		WHERE p.deleted_at IS NULL
+		LIMIT ? OFFSET ?
 	`
 
-	err := db.Raw(query).Scan(&productsWithImages).Error
+	err := db.Raw(query, perPage, offset).Scan(&productsWithImages).Error
 	if err != nil {
-		return nil,count, err
+		return nil, count, err
 	}
 
-	
+	// Query to get the total count of products excluding those with non-null deletedAt
+	countQuery := `
+		SELECT COUNT(*)
+		FROM products
+		WHERE deleted_at IS NULL
+	`
 
-	return productsWithImages, count, err
+	err = db.Raw(countQuery).Scan(&count).Error
+	if err != nil {
+		return nil, count, err
+	}
+
+	return productsWithImages, count, nil
 }
 
 func (p *Product) FindBySlug(db *gorm.DB, slug string) (*Product, error) {
@@ -96,33 +109,21 @@ func (p *Product) FindByID(db *gorm.DB, productID string) (*Product, error) {
 	return &product, err
 }
 
-func (p *Product) SearchProducts(db *gorm.DB, query string, perPage, page int) (*[]Product, int64, error) {
+func (p *Product) SearchProducts(db *gorm.DB, searchQuery string, perPage, page int) ([]Product, int64, error) {
 	var products []Product
 	var totalRows int64
 
-	offset := perPage * (page - 1)
-
-	// Construct the query to search for products by name or description containing the query string
-	// Using OR condition with LIKE for flexible search
-	db = db.Debug().Model(&Product{}).
-		Where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?", "%"+query+"%", "%"+query+"%").
-		Order("created_at desc").
+	offset := (page - 1) * perPage
+	query := db.Model(&Product{}).
+		Where("deleted_at IS NULL").
+		Where("name LIKE ?", "%"+searchQuery+"%").
+		Count(&totalRows).
 		Offset(offset).
-		Limit(perPage)
+		Limit(perPage).
+		Find(&products)
 
-	// Count total rows for pagination
-	if err := db.Model(&Product{}).Where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?", "%"+query+"%", "%"+query+"%").Count(&totalRows).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// Retrieve the products
-	if err := db.Find(&products).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return &products, totalRows, nil
+	return products, totalRows, query.Error
 }
-
 func (p *Product) GetAllProducts(db *gorm.DB) (*[]Product, error) {
 	var err error
 	var products []Product

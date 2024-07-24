@@ -119,6 +119,7 @@ func GetProductsWithImages(db *gorm.DB) ([]ProductWithImage, error) {
 			FROM product_images
 			ORDER BY product_id, id
 		) pi ON p.id = pi.product_id
+		WHERE p.deleted_at IS NULL
 	`
 
 	err := db.Raw(query).Scan(&productsWithImages).Error
