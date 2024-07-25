@@ -51,6 +51,7 @@ func Run(){
 	dbConfig.DBPassword = getEnv("DB_PASS","admin")
 	dbConfig.DBHost = getEnv("DB_HOST","localhost")
 	dbConfig.DBPort = getEnv("DB_PORT","5432")
+	dbConfig.POSTGRES_URL =getEnv("POSTGRES_URL","postgres://default:F9OMk2fdYxZQ@ep-cool-bush-a18x3gsc-pooler.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require")
 
 	sessionKey := getEnv("SESSION_KEY","")
 	if sessionKey == "" {
